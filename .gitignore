@@ -63,3 +63,6 @@ vortex_plots.png
 # Empty Hugging Face boilerplate cards; the root README documents these
 adapters/*/README.md
 adapters/*/tokenizer_config.json
+
+# Fetched at publish time by publish_to_hf.py
+LICENSE.qwen
