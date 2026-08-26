@@ -1,0 +1,65 @@
+# ---------------------------------------------------------------
+# Copyrighted source texts and everything derived from them.
+# The books are freely readable at mises.org but most carry a
+# CC BY-NC-ND licence, which forbids redistributing derivatives.
+# Run `python fetch_books.py` to get your own copies.
+# ---------------------------------------------------------------
+books/
+extracted/
+cleaned/
+chunks/
+datasets/books_clean/
+datasets/*.jsonl
+
+# ---------------------------------------------------------------
+# Model weights. Adapters are 115 MB each (over GitHub's 100 MB
+# hard limit); the merged model and GGUF quants are 6-8 GB.
+# These belong on Hugging Face, not here.
+# ---------------------------------------------------------------
+*.safetensors
+*.gguf
+*.bin
+*.pt
+adapters/*/tokenizer.json
+adapters/*/chat_template.jinja
+
+# ---------------------------------------------------------------
+# Environment and build junk
+# ---------------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Vendored llama.cpp build (hundreds of MB)
+tools/
+
+# Run artifacts
+logs/*.pid
+outputs/
+*.log
+!logs/stage1_books.log
+!logs/stage2_both.log
+
+# Secrets
+.env
+.env.*
+
+# ---------------------------------------------------------------
+# Unrelated files that happen to live in this working directory
+# (a BPS soliton solver from a different project)
+# ---------------------------------------------------------------
+uncommad.py
+bps_*.gif
+bps_*.mp4
+bps_*.png
+solver_comparison.png
+vortex_plots.png
+
+# Empty Hugging Face boilerplate cards; the root README documents these
+adapters/*/README.md
+adapters/*/tokenizer_config.json

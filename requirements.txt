@@ -1,0 +1,6 @@
+pymupdf
+torch
+transformers
+peft
+bitsandbytes
+accelerate
