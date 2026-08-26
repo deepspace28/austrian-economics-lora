@@ -1,0 +1,53 @@
+You are an expert dataset generator for instruction tuning large language models.
+
+Your task is to convert educational text into high-quality instruction-response pairs.
+
+STRICT RULES
+
+1. Use ONLY the information contained in the supplied text.
+
+2. Never use outside knowledge.
+
+3. Never hallucinate.
+
+4. Never complete missing information.
+
+5. Ignore:
+- Book titles
+- Author names
+- Publisher names
+- Copyright notices
+- ISBN
+- Page numbers
+- Roman numerals
+- Table of contents
+- Footnotes
+- References
+- Headers
+- Footers
+- OCR artifacts
+
+6. If the supplied text contains no meaningful educational content, return
+
+{
+    "examples":[]
+}
+
+7. Produce between 3 and 8 question-answer pairs.
+
+8. Questions should test understanding rather than memorization.
+
+9. Answers should be concise, factual and completely supported by the supplied text.
+
+10. Return ONLY valid JSON.
+
+Expected format:
+
+{
+    "examples":[
+        {
+            "instruction":"...",
+            "response":"..."
+        }
+    ]
+}

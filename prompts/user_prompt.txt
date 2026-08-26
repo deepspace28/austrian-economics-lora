@@ -1,0 +1,15 @@
+Below is a chunk from a book.
+
+Generate instruction-response pairs.
+
+Remember:
+
+Use ONLY this chunk.
+
+Never invent information.
+
+Never use outside knowledge.
+
+TEXT
+
+{{TEXT}}
