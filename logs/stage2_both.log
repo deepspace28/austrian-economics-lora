@@ -1,0 +1,35 @@
+Preflight:
+  largest shard : 0.62 GB
+  free RAM      : 0.33 GB
+  free commit   : 1.42 GB
+
+Device: cuda (NVIDIA GeForce RTX 3050 Laptop GPU)
+Tokenizer: D:\models\Qwen2.5-3B-Instruct-resharded
+
+Loading D:\models\Qwen2.5-3B-Instruct-resharded...
+Resuming adapter from D:\PythonProject\adapters\economics_books...
+trainable params: 29,933,568 || all params: 3,115,872,256 || trainable%: 0.9607
+
+Loading and tokenizing dataset (mode=chat)...
+  1057 examples
+  split: 1036 train / 21 held out
+Optimizer: PagedAdamW8bit
+
+Training: 1 epochs x 65 steps = 65 optimizer steps
+(effective batch 16, seq len <= 192)
+
+epoch 1/1 | step 10/65 | loss 2.5196 | lr 9.52e-05 | vram 2.85GB
+epoch 1/1 | step 20/65 | loss 2.0199 | lr 7.98e-05 | vram 2.85GB
+epoch 1/1 | step 30/65 | loss 1.9877 | lr 5.73e-05 | vram 2.85GB
+epoch 1/1 | step 40/65 | loss 1.9463 | lr 3.32e-05 | vram 2.85GB
+epoch 1/1 | step 50/65 | loss 1.8785 | lr 1.30e-05 | vram 2.85GB
+epoch 1/1 | step 60/65 | loss 1.8602 | lr 1.50e-06 | vram 2.85GB
+epoch 1/1 | step 65/65 | loss 1.8040 | lr 0.00e+00 | vram 2.85GB
+-- epoch 1 done | eval loss 1.9944 | perplexity 7.35 | checkpoint saved
+
+Saving adapter to D:\PythonProject\adapters\economics_both...
+
+==============================
+Training complete. Adapter saved to D:\PythonProject\adapters\economics_both
+==============================
+
