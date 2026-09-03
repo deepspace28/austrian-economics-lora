@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Syntax-check every module
+        run: python -m compileall -q src *.py
+
+      - name: Validate JSON data files
+        run: |
+          python - <<'EOF'
+          import glob, json
+          files = sorted(glob.glob("adapters/**/*.json", recursive=True)) + sorted(glob.glob("datasets/*.json"))
+          assert files, "no JSON data files found"
+          for path in files:
+              with open(path, encoding="utf-8") as fh:
+                  json.load(fh)
+              print(f"ok {path}")
+          EOF
+
+      - name: Pipeline entry points exist
+        run: |
+          test -f src/main.py
+          test -f src/config.py
+          test -f train.py
+          test -f prompts/system_prompt.txt
