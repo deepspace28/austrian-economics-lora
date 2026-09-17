@@ -18,6 +18,9 @@ jobs:
       - name: Syntax-check every module
         run: python -m compileall -q src *.py
 
+      - name: Unit tests (stdlib only)
+        run: python -m unittest discover tests -v
+
       - name: Validate JSON data files
         run: |
           python - <<'EOF'

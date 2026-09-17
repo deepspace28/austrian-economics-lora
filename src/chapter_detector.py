@@ -7,7 +7,7 @@ def detect_chapters(text):
     """
 
     # Simple regex for common chapter headings
-    chapter_pattern = re.compile(r'^(?:CHAPTER|Chapter|Part)\s+(?:[IVXLCDM]+|\d+)', re.MULTILINE)
+    chapter_pattern = re.compile(r'^(?:CHAPTER|Chapter|PART|Part)\s+(?:[IVXLCDM]+|\d+)', re.MULTILINE)
     
     matches = list(chapter_pattern.finditer(text))
     
@@ -19,7 +19,8 @@ def detect_chapters(text):
         start = matches[i].start()
         end = matches[i+1].start() if i + 1 < len(matches) else len(text)
         
-        title = text[start:text.find('\n', start)].strip()
+        nl = text.find('\n', start)
+        title = text[start: nl if nl != -1 else len(text)].strip()
         content = text[start:end].strip()
         
         chapters.append({
