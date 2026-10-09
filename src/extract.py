@@ -2,13 +2,15 @@
 
 from pathlib import Path
 
-import fitz  # PyMuPDF
-
 from config import BOOKS_DIR, EXTRACTED_DIR
 
 
 def extract_text(pdf_path) -> str:
     """Return the concatenated text of every page in the PDF."""
+    # Imported lazily so this module stays importable without PyMuPDF, which
+    # keeps the stdlib-only CI job and the extract tests working.
+    import fitz
+
     pages = []
     with fitz.open(pdf_path) as doc:
         for page in doc:
