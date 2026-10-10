@@ -2,10 +2,6 @@ import os
 from pathlib import Path
 import re
 
-# Redirect HuggingFace cache to Drive D
-
-from transformers import AutoTokenizer
-
 from config import (
     CLEANED_DIR,
     CHUNKS_DIR,
@@ -14,18 +10,24 @@ from config import (
 MODEL_NAME = "meta-llama/Llama-3.2-1B-Instruct"
 CACHE_DIR = os.environ.get("HF_HOME")
 
-# --------------------------------------------------
-# Load Tokenizer
-# --------------------------------------------------
+_tokenizer = None
 
-print("Loading tokenizer...")
 
-tokenizer = AutoTokenizer.from_pretrained(
-    MODEL_NAME,
-    cache_dir=CACHE_DIR
-)
+def get_tokenizer():
+    """Load the HF tokenizer lazily so the module is importable without
+    transformers installed or network access."""
+    global _tokenizer
+    if _tokenizer is None:
+        from transformers import AutoTokenizer
 
-print("Tokenizer Loaded.")
+        print("Loading tokenizer...")
+        _tokenizer = AutoTokenizer.from_pretrained(
+            MODEL_NAME,
+            cache_dir=CACHE_DIR
+        )
+        print("Tokenizer Loaded.")
+    return _tokenizer
+
 
 # --------------------------------------------------
 # Settings
@@ -39,7 +41,7 @@ OVERLAP_TOKENS = 100
 # --------------------------------------------------
 
 def count_tokens(text: str) -> int:
-    return len(tokenizer.encode(text, add_special_tokens=False))
+    return len(get_tokenizer().encode(text, add_special_tokens=False))
 
 
 def split_paragraphs(text: str):
@@ -62,7 +64,20 @@ def split_paragraphs(text: str):
 # Chunk Builder
 # --------------------------------------------------
 
-def build_chunks(paragraphs):
+def build_chunks(paragraphs, count_fn=None):
+
+    if count_fn is None:
+        count_fn = count_tokens
+
+    # A paragraph that is empty (or only whitespace) contributes no text but
+    # still reaches "\n\n".join, so a run of them produced a chunk that was
+    # pure separator - written to disk as an empty training example, and
+    # counted by the trainer as a sample with no target. Drop them here so
+    # every returned chunk carries real text.
+    paragraphs = [p for p in paragraphs if p and p.strip()]
+
+    if not paragraphs:
+        return []
 
     chunks = []
 
@@ -72,11 +87,12 @@ def build_chunks(paragraphs):
 
     for paragraph in paragraphs:
 
-        paragraph_tokens = count_tokens(paragraph)
+        paragraph_tokens = count_fn(paragraph)
 
         if current_tokens + paragraph_tokens > TARGET_TOKENS:
 
-            chunks.append("\n\n".join(current_chunk))
+            if current_chunk:
+                chunks.append("\n\n".join(current_chunk))
 
             overlap = []
 
@@ -84,7 +100,7 @@ def build_chunks(paragraphs):
 
             for previous in reversed(current_chunk):
 
-                t = count_tokens(previous)
+                t = count_fn(previous)
 
                 if overlap_tokens + t > OVERLAP_TOKENS:
                     break

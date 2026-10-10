@@ -1,26 +1,44 @@
-import json
+"""Extract raw text from the source PDFs into EXTRACTED_DIR."""
+
+from pathlib import Path
+
+from config import BOOKS_DIR, EXTRACTED_DIR
 
 
-class DatasetExporter:
+def extract_text(pdf_path) -> str:
+    """Return the concatenated text of every page in the PDF."""
+    # Imported lazily so this module stays importable without PyMuPDF, which
+    # keeps the stdlib-only CI job and the extract tests working.
+    import fitz
 
-    def __init__(self, output_file):
+    pages = []
+    with fitz.open(pdf_path) as doc:
+        for page in doc:
+            pages.append(page.get_text("text"))
+    return "\n".join(pages)
 
-        self.output_file = output_file
 
-    def save(self, examples):
+def extract_file(pdf_path, output_path) -> int:
+    """Extract one PDF to a .txt file. Returns the character count."""
+    text = extract_text(pdf_path)
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(output_path).write_text(text, encoding="utf-8")
+    return len(text)
 
-        with open(
-            self.output_file,
-            "a",
-            encoding="utf-8"
-        ) as f:
 
-            for example in examples:
+def main():
+    if not BOOKS_DIR.exists():
+        print(f"Books directory not found: {BOOKS_DIR}")
+        return
 
-                json.dump(
-                    example,
-                    f,
-                    ensure_ascii=False
-                )
+    pdfs = sorted(BOOKS_DIR.glob("*.pdf"))
+    print(f"Found {len(pdfs)} PDFs.")
 
-                f.write("\n")
+    for pdf in pdfs:
+        output_path = EXTRACTED_DIR / f"{pdf.stem}.txt"
+        n = extract_file(pdf, output_path)
+        print(f"{pdf.name} -> {output_path.name} ({n:,} chars)")
+
+
+if __name__ == "__main__":
+    main()

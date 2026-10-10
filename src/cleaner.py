@@ -1,6 +1,6 @@
 import os
 import re
-from . import config
+from config import CLEANED_DIR, EXTRACTED_DIR
 
 def clean_text(text):
     """
@@ -45,15 +45,15 @@ def clean_file(input_path, output_path):
     print(f"Characters: {len(cleaned_text):,}")
 
 def main():
-    if not os.path.exists(config.EXTRACTED_DIR):
-        print(f"Extracted directory not found: {config.EXTRACTED_DIR}")
+    if not os.path.exists(EXTRACTED_DIR):
+        print(f"Extracted directory not found: {EXTRACTED_DIR}")
         return
 
-    for filename in os.listdir(config.EXTRACTED_DIR):
+    for filename in os.listdir(EXTRACTED_DIR):
         if filename.endswith(".txt"):
-            input_path = os.path.join(config.EXTRACTED_DIR, filename)
+            input_path = os.path.join(EXTRACTED_DIR, filename)
             output_filename = filename.replace(".txt", "_clean.txt")
-            output_path = os.path.join(config.CLEANED_DIR, output_filename)
+            output_path = os.path.join(CLEANED_DIR, output_filename)
             
             clean_file(input_path, output_path)
 
