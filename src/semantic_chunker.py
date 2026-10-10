@@ -69,6 +69,16 @@ def build_chunks(paragraphs, count_fn=None):
     if count_fn is None:
         count_fn = count_tokens
 
+    # A paragraph that is empty (or only whitespace) contributes no text but
+    # still reaches "\n\n".join, so a run of them produced a chunk that was
+    # pure separator - written to disk as an empty training example, and
+    # counted by the trainer as a sample with no target. Drop them here so
+    # every returned chunk carries real text.
+    paragraphs = [p for p in paragraphs if p and p.strip()]
+
+    if not paragraphs:
+        return []
+
     chunks = []
 
     current_chunk = []

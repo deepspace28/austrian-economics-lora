@@ -47,6 +47,32 @@ class TestBuildChunks(unittest.TestCase):
         self.assertTrue(chunks[-1].startswith(" ".join(["b"] * 100)))
         self.assertIn("c", chunks[-1])
 
+    def test_blank_paragraphs_do_not_produce_a_whitespace_only_chunk(self):
+        # "\n\n".join(["", ""]) is "\n\n" - a chunk holding nothing but the
+        # separator. It reached disk as an empty training example, and the
+        # trainer counted it as a sample with no target.
+        self.assertEqual(build_chunks(["", ""], count_fn=word_count), [])
+        self.assertEqual(build_chunks(["   ", "\t\n"], count_fn=word_count), [])
+
+    def test_blank_paragraphs_are_dropped_without_disturbing_real_ones(self):
+        paragraphs = ["alpha", "", "  ", "beta"]
+        self.assertEqual(
+            build_chunks(paragraphs, count_fn=word_count),
+            ["alpha\n\nbeta"],
+        )
+
+    def test_every_returned_chunk_carries_real_text(self):
+        # The invariant, stated once over a mix that used to break it.
+        paragraphs = ["", " ".join(["w"] * 900), "", "", "tail", "  "]
+        chunks = build_chunks(paragraphs, count_fn=word_count)
+        self.assertTrue(chunks)
+        for chunk in chunks:
+            self.assertTrue(chunk.strip(), f"empty chunk: {chunk!r}")
+
+    def test_no_input_yields_no_chunks(self):
+        self.assertEqual(build_chunks([], count_fn=word_count), [])
+        self.assertEqual(build_chunks(["", "  "], count_fn=word_count), [])
+
 
 if __name__ == "__main__":
     unittest.main()
