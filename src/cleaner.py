@@ -38,23 +38,42 @@ def clean_file(input_path, output_path):
 
     cleaned_text = clean_text(text)
 
+    output_dir = os.path.dirname(output_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(cleaned_text)
 
     print(f"Cleaning Complete! Saved to: {output_path}")
     print(f"Characters: {len(cleaned_text):,}")
 
+def output_name(filename):
+    """Map an extracted filename to its cleaned counterpart.
+
+    Idempotent: cleaning an already-cleaned file rewrites the same name instead
+    of stacking a second "_clean" suffix on every run.
+    """
+    stem, ext = os.path.splitext(filename)
+    if stem.endswith("_clean"):
+        stem = stem[: -len("_clean")]
+    return f"{stem}_clean{ext}"
+
+
 def main():
     if not os.path.exists(EXTRACTED_DIR):
         print(f"Extracted directory not found: {EXTRACTED_DIR}")
         return
 
-    for filename in os.listdir(EXTRACTED_DIR):
+    # clean_file wrote into CLEANED_DIR without creating it, so a first run on
+    # a clean checkout raised FileNotFoundError.
+    os.makedirs(CLEANED_DIR, exist_ok=True)
+
+    for filename in sorted(os.listdir(EXTRACTED_DIR)):
         if filename.endswith(".txt"):
             input_path = os.path.join(EXTRACTED_DIR, filename)
-            output_filename = filename.replace(".txt", "_clean.txt")
-            output_path = os.path.join(CLEANED_DIR, output_filename)
-            
+            output_path = os.path.join(CLEANED_DIR, output_name(filename))
+
             clean_file(input_path, output_path)
 
 if __name__ == "__main__":

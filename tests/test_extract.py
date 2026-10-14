@@ -31,8 +31,9 @@ class TestExtract(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_extract_text_roundtrip(self):
-        text = extract_text(self.pdf_path)
+        text, empty_pages = extract_text(self.pdf_path)
         self.assertIn("Human action is purposeful behavior.", text)
+        self.assertEqual(empty_pages, 0)
 
     def test_extract_file_writes_txt(self):
         out = Path(self.tmp.name) / "out" / "sample.txt"
