@@ -21,6 +21,13 @@ jobs:
       - name: Unit tests (stdlib only)
         run: python -m unittest discover tests -v
 
+      - name: Pipeline entry points import without a GPU stack
+        # main() must be importable (and testable) without torch installed:
+        # it imported dataset_generator at module scope, which made every unit
+        # test of the loop pay a ~20s torch import.
+        run: |
+          PYTHONPATH=src python -c "import main; print('ok')"
+
       - name: Validate JSON data files
         run: |
           python - <<'EOF'
@@ -39,3 +46,16 @@ jobs:
           test -f src/config.py
           test -f train.py
           test -f prompts/system_prompt.txt
+
+      - name: Every src module imports without the GPU stack
+        # Guards against a module-scope import of torch/transformers creeping
+        # back in, which is what made the unit tests slow and CI-heavy.
+        run: |
+          PYTHONPATH=src python - <<'EOF'
+          import importlib
+          for name in ("config", "utils", "validator", "exporter",
+                       "chapter_detector", "cleaner", "extract",
+                       "semantic_chunker", "main"):
+              importlib.import_module(name)
+              print(f"ok {name}")
+          EOF

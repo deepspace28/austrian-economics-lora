@@ -79,28 +79,47 @@ in a couple of hours.
 ## Pipeline
 
 ```
-fetch_books.py      download the source PDFs from mises.org
-  └─ src/extract.py         PyMuPDF text extraction
-  └─ src/cleaner.py         font-size body detection, header/footer removal
-  └─ src/chapter_detector.py
-  └─ src/semantic_chunker.py
-  └─ src/dataset_generator.py   3-8 Q&A pairs per 1,500-char chunk
-  └─ src/validator.py
-train.py            two-stage QLoRA (TRAIN_MODE=text | chat)
-merge_lora.py       fold the adapter into the base weights
-ask.py              single prompt, chat or raw-continuation mode
+fetch_books.py           download the source PDFs from mises.org
+prepare_books.py         font-aware corpus extraction -> datasets/books_clean/
+
+src/extract.py           PyMuPDF text extraction
+src/cleaner.py           whitespace and de-hyphenation
+src/chapter_detector.py  split a book into chapters on CHAPTER/PART headings
+src/semantic_chunker.py  pack paragraphs into ~800-token chunks
+src/validator.py         drop front/back matter and furniture pages
+src/dataset_generator.py 3-8 Q&A pairs per chunk
+src/main.py              chunks -> datasets/training_dataset.jsonl
+
+train.py                 two-stage QLoRA (TRAIN_MODE=text | chat)
+merge_lora.py            fold the adapter into the base weights
+ask.py                   single prompt, chat or raw-continuation mode
 ```
 
-The cleaner is font-aware rather than regex-based: it finds the modal body font size
-and drops anything that deviates, which removes running heads, page numbers, and
-footnotes without hand-tuning per book. On *Human Action* it kept 914 of 952 pages.
+Each stage writes its own directory, so a failure can be rerun from that stage
+without redoing the ones upstream of it.
+
+The corpus builder (`prepare_books.py`) is font-aware rather than regex-based: it
+finds the modal body font size and drops anything that deviates, which removes
+running heads, page numbers, and footnotes without hand-tuning per book. On
+*Human Action* it kept 914 of 952 pages.
+
+`src/validator.py` then rejects chunks that are front or back matter rather than
+prose. It keys on shape, not on keywords: a contents page is a run of dot-leader
+entries, a title page is short, mostly capitals and nearly punctuation-free.
+Keyword matching ("if the word CONTENTS appears") threw away real passages — an
+economics text discusses the *contents* of a deposit and *copyright* law
+constantly.
 
 ## Setup
 
 ```bash
 pip install -r requirements.txt
 python fetch_books.py          # get the source PDFs
-python src/main.py             # extract -> clean -> chunk -> dataset
+
+python src/extract.py          # PDFs      -> extracted/
+python src/cleaner.py          # extracted/-> cleaned/
+python src/semantic_chunker.py # cleaned/  -> chunks/
+python src/main.py             # chunks/   -> datasets/training_dataset.jsonl
 
 set TRAIN_MODE=text  & python train.py    # stage 1
 set TRAIN_MODE=chat  & set RESUME_ADAPTER=adapters/economics_books & python train.py
@@ -108,6 +127,15 @@ set TRAIN_MODE=chat  & set RESUME_ADAPTER=adapters/economics_books & python trai
 python ask.py "Why does credit expansion cause a boom that must end in a bust?"
 python ask.py --raw "Prices are signals that"
 ```
+
+`src/main.py` resumes from `outputs/progress.json`, so an interrupted
+generation run continues where it stopped instead of regenerating pairs it
+already wrote. It refuses to resume if that file is corrupt: the dataset is
+append-only, so restarting from zero would duplicate every pair already on disk.
+
+Dataset generation settings live in `src/config.py` (`TEMPERATURE`,
+`MAX_NEW_TOKENS`, `MAX_QA`, `MAX_ATTEMPTS`) and are read by the generator, not
+just declared.
 
 Training is configured by environment variable — `QWEN_MODEL`, `TRAIN_MODE`,
 `BLOCK_SIZE`, `BATCH_SIZE`, `GRAD_ACCUM`, `EPOCHS`, `LEARNING_RATE`, `MAX_STEPS`.

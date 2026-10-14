@@ -11,7 +11,13 @@ os.environ.pop("HUGGING_FACE_HUB_TOKEN", None)
 
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 
-from config import PROMPTS_DIR
+from config import (
+    MAX_ATTEMPTS,
+    MAX_NEW_TOKENS,
+    MAX_QA,
+    PROMPTS_DIR,
+    TEMPERATURE,
+)
 from utils import read_text, load_prompt
 from validator import is_valid_chunk
 
@@ -77,8 +83,8 @@ class DatasetGenerator:
             with torch.inference_mode():
                 generated_ids = self.model.generate(
                     **model_inputs,
-                    max_new_tokens=600,
-                    temperature=0.1,
+                    max_new_tokens=MAX_NEW_TOKENS,
+                    temperature=TEMPERATURE,
                     do_sample=True
                 )
 
@@ -104,10 +110,9 @@ class DatasetGenerator:
             print("Skipped (Invalid Chunk)\n")
             return {"examples": []}
 
-        retries = 2
-        for attempt in range(retries):
+        for attempt in range(MAX_ATTEMPTS):
             try:
-                print(f"Generating... Attempt {attempt + 1}/{retries}")
+                print(f"Generating... Attempt {attempt + 1}/{MAX_ATTEMPTS}")
                 response = self.generate(chunk)
 
                 # Strip any Markdown code fences the model may add
@@ -124,11 +129,26 @@ class DatasetGenerator:
 
                 result = json.loads(response)
 
-                if "examples" not in result:
-                    raise Exception("Missing 'examples' field in generated JSON.")
+                examples = result.get("examples")
 
-                print(f"Generated {len(result['examples'])} examples.\n")
-                return result
+                if not isinstance(examples, list):
+                    raise ValueError("'examples' missing or not a list.")
+
+                # Drop anything without both halves, so a malformed pair never
+                # reaches the trainer as a sample with an empty target.
+                examples = [
+                    e for e in examples
+                    if isinstance(e, dict)
+                    and e.get("instruction")
+                    and e.get("response")
+                ]
+
+                if len(examples) > MAX_QA:
+                    print(f"Truncating {len(examples)} pairs to {MAX_QA}.\n")
+                    examples = examples[:MAX_QA]
+
+                print(f"Generated {len(examples)} examples.\n")
+                return {"examples": examples}
 
             except torch.cuda.OutOfMemoryError:
                 print("CUDA OutOfMemory detected. Recovering memory...")
@@ -138,7 +158,7 @@ class DatasetGenerator:
                 time.sleep(2)
             except Exception as e:
                 print(f"Error parsing JSON output: {e}")
-                if attempt != retries - 1:
+                if attempt != MAX_ATTEMPTS - 1:
                     print("Retrying...\n")
 
         print("Failed to produce valid JSON.\n")
