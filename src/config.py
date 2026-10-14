@@ -16,26 +16,23 @@ PROMPTS_DIR = PROJECT_ROOT / "prompts"
 LOG_DIR = PROJECT_ROOT / "logs"
 
 # ==========================================================
-# MODEL
+# DATASET GENERATION
 # ==========================================================
+# These are read by src/dataset_generator.py. They used to be declared here and
+# never read, while the generator hardcoded its own values, so the prompt asked
+# for 3-8 pairs and the sampler used a different temperature than the file said.
 
-MODEL_NAME = os.environ.get("MODEL_NAME", "glm-5.2")
-
-# Read from the environment; never commit a literal key here.
-#   Windows:  set MODEL_ACCESS_KEY=...
-#   bash:     export MODEL_ACCESS_KEY=...
-MODEL_ACCESS_KEY = os.environ.get("MODEL_ACCESS_KEY", "")
-
-
-# ==========================================================
-# DATASET
-# ==========================================================
-
-MIN_QA = 3
+# Upper bound on pairs kept per chunk. The system prompt asks for 3-8.
 MAX_QA = 8
 
-CHUNK_SIZE = 1500
-
+# Sampling. 0.2 keeps generation close to the source text; higher values drift
+# into invented material, which the prompt forbids.
 TEMPERATURE = 0.2
 
-MAX_TOKENS = 2500
+# Generation budget. 600 tokens truncated long chunks mid-JSON, and the parse
+# then failed and the chunk was retried, which made failures cluster on the
+# longest and richest chunks.
+MAX_NEW_TOKENS = 1500
+
+# Attempts per chunk before it is given up on.
+MAX_ATTEMPTS = 3
