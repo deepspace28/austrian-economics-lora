@@ -5,7 +5,9 @@ Run from the repository root:
     python src/main.py
 """
 
+import argparse
 import json
+import sys
 from pathlib import Path
 
 # The modules in src/ import each other by bare name, which only resolves when
@@ -47,7 +49,25 @@ def save_progress(index):
         json.dump({"last_chunk": index}, f, indent=4)
 
 
-def main():
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Generate instruction pairs from chunks.")
+    parser.add_argument(
+        "--reset-progress",
+        action="store_true",
+        help="Delete the progress file and start over from chunk 0.",
+    )
+    if argv is None:
+        argv = sys.argv[1:] if __name__ == "__main__" else []
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
+
+    if args.reset_progress and PROGRESS_FILE.exists():
+        PROGRESS_FILE.unlink()
+        print(f"Removed {PROGRESS_FILE}; starting from chunk 0.")
+
     print("=" * 60)
     print(" Austrian Economics Dataset Generator ")
     print("=" * 60)
