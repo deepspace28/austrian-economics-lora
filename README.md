@@ -150,6 +150,17 @@ yourself. Two resolve automatically; the rest print a search link.
 family — check the [model card](https://huggingface.co/Qwen/Qwen2.5-3B-Instruct)
 before using derived weights commercially. The code in this repository is MIT.
 
+## Tests
+
+The pipeline's pure-Python modules are covered by a unittest suite that runs without
+torch or a GPU:
+
+`ash
+python -m unittest discover tests -v
+`
+
+CI runs the same command on every push (see .github/workflows/ci.yml).
+
 ## Licence
 
 MIT for the pipeline code. See [LICENSE](LICENSE). The source texts retain their own
