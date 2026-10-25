@@ -21,7 +21,6 @@ def load_prompt(path: Path):
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
-from pathlib import Path
 
 def list_chunks():
 
