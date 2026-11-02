@@ -101,6 +101,7 @@ footnotes without hand-tuning per book. On *Human Action* it kept 914 of 952 pag
 pip install -r requirements.txt
 python fetch_books.py          # get the source PDFs
 python src/main.py             # extract -> clean -> chunk -> dataset
+python validate_dataset.py datasets/training_dataset.jsonl # validate chat data before training
 
 set TRAIN_MODE=text  & python train.py    # stage 1
 set TRAIN_MODE=chat  & set RESUME_ADAPTER=adapters/economics_books & python train.py

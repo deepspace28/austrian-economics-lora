@@ -22,6 +22,7 @@ from transformers import (
     get_cosine_schedule_with_warmup,
 )
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from src.dataset_validator import validate_dataset
 
 MODEL_NAME = os.environ.get("QWEN_MODEL", "Qwen/Qwen2.5-3B-Instruct")
 CACHE_DIR = os.environ.get("HF_HOME")
@@ -366,6 +367,19 @@ if MODE == "text":
     print(f"  {dataset.total_tokens:,} tokens -> {len(dataset)} blocks "
           f"of {BLOCK_SIZE}")
 else:
+    try:
+        validation = validate_dataset(DATASET_PATH)
+    except OSError as error:
+        raise SystemExit(f"Unable to validate {DATASET_PATH}: {error}") from error
+    if not validation.ok:
+        print("Dataset validation failed:")
+        for issue in validation.issues:
+            location = f"line {issue.line_number}" if issue.line_number else "dataset"
+            print(f"  {location}: {issue.message}")
+        raise SystemExit(
+            f"{validation.records - validation.valid} invalid record(s) in {DATASET_PATH}"
+        )
+    print(f"  validated {validation.valid} records")
     dataset = JsonlDataset(DATASET_PATH, tokenizer)
     print(f"  {len(dataset)} examples")
 
