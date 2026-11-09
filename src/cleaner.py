@@ -38,6 +38,8 @@ def clean_file(input_path, output_path):
 
     cleaned_text = clean_text(text)
 
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(cleaned_text)
 
