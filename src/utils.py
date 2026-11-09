@@ -4,6 +4,7 @@ import json
 
 
 def read_text(path: Path) -> str:
+    path = Path(path)
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
@@ -18,6 +19,7 @@ def write_jsonl(path: Path, data: list):
 
 
 def load_prompt(path: Path):
+    path = Path(path)
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
