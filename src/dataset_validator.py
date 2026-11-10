@@ -71,6 +71,8 @@ def validate_sample(sample: Any) -> list[str]:
 
 def validate_dataset(path: Path, max_issues: int = 20) -> ValidationResult:
     """Validate non-empty JSONL records and retain the first few useful errors."""
+    if isinstance(max_issues, bool) or not isinstance(max_issues, int):
+        raise TypeError('max_issues must be an integer')
     if max_issues < 0:
         raise ValueError("max_issues must be non-negative")
 

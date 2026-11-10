@@ -64,6 +64,15 @@ class TestValidateDataset(unittest.TestCase):
             self.assertFalse(result.ok)
             self.assertEqual([issue.line_number for issue in result.issues], [2, 3])
 
+    def test_rejects_non_integer_issue_limit(self):
+        for max_issues in (True, 1.5, None):
+            with self.assertRaises(TypeError):
+                validate_dataset(Path('unused'), max_issues)
+
+    def test_rejects_negative_issue_limit(self):
+        with self.assertRaises(ValueError):
+            validate_dataset(Path('unused'), -1)
+
     def test_empty_dataset_is_invalid(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "dataset.jsonl"
